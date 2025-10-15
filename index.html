@@ -5,24 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Slideshow — Plano de Comunicação (Bernardo Silva)</title>
   <style>
-    :root { --bg:#0b0b0b; --fg:#f5f5f5; --accent:#ff2d55; --chrome: 180px; }
+    :root { --bg:#0b0b0b; --fg:#f5f5f5; --accent:#ff2d55; --chrome: 180px; --vh: 1vh; }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial}
     .toolbar{position:fixed;inset:0 0 auto 0;display:flex;gap:.5rem;align-items:center;padding:.75rem 1rem;background:linear-gradient(180deg,rgba(0,0,0,.75),rgba(0,0,0,.25),transparent);z-index:3}
     .toolbar button,.toolbar .counter{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:var(--fg);padding:.5rem .75rem;border-radius:.75rem;backdrop-filter:blur(6px);font-weight:600;cursor:pointer}
     .toolbar .counter{cursor:default}
     .stage{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden}
-    .slide{max-width:96vw;max-height:calc(100vh - var(--chrome, 180px));border-radius:12px;box-shadow:0 10px 35px rgba(0,0,0,.55);user-select:none;-webkit-user-drag:none;transition:transform .25s ease}
+    .slide{max-width:96vw;max-height:calc(var(--vh, 1vh) * 100 - var(--chrome, 180px));border-radius:12px;box-shadow:0 10px 35px rgba(0,0,0,.55);user-select:none;-webkit-user-drag:none;transition:transform .25s ease}
     .nav{position:fixed;inset:0;display:flex;align-items:center;justify-content:space-between;pointer-events:none}
     .nav button{pointer-events:auto;margin:0 .5rem;border:none;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.08);color:var(--fg);font-size:1.35rem;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
     .thumbs{position:fixed;inset:auto 0 0 0;display:flex;gap:.5rem;overflow-x:auto;padding:.5rem;background:linear-gradient(0deg,rgba(0,0,0,.8),rgba(0,0,0,.4),transparent)}
-    .thumbs img{height:64px;border-radius:8px;opacity:.8;cursor:pointer;transition:opacity .2s,transform .2s}
+    .thumbs img{height:64px;border-radius:8px;opacity:.85;cursor:pointer;transition:opacity .2s,transform .2s}
     .thumbs img.active{outline:2px solid var(--accent);opacity:1;transform:translateY(-2px)}
 
-    /* Compact mode tweaks when embedded */
     html.compact .toolbar { padding:.5rem .75rem; }
     html.compact .thumbs img { height:56px; }
     html.compact .nav button { width:46px; height:46px; }
+
+    @supports (height: 100dvh) {
+      @media (max-width: 768px) {
+        .slide { max-height: calc(100dvh - var(--chrome, 150px)); }
+      }
+    }
   </style>
 </head>
 <body>
@@ -89,7 +94,6 @@
     slides.forEach((src,i)=>{const t=new Image(); t.src=src; t.alt='Miniatura '+(i+1);
       t.addEventListener('click',()=>show(i)); el.thumbs.appendChild(t);});
 
-    // Auto-compact when embedded in an iframe or ?compact=1
     (function(){ 
       const root = document.documentElement;
       const isEmbed = (window !== window.parent) || new URLSearchParams(location.search).get('compact')==='1';
@@ -101,12 +105,17 @@
       function resizeChrome(){ 
         const tb = toolbar ? toolbar.offsetHeight : 0;
         const th = thumbs ? thumbs.offsetHeight : 0;
-        const chrome = tb + th + 24; // margem de segurança
+        const chrome = tb + th + 24;
         root.style.setProperty('--chrome', chrome + 'px');
       }
 
-      window.addEventListener('load', resizeChrome);
-      window.addEventListener('resize', resizeChrome);
+      function setVH(){ 
+        const vh = window.innerHeight * 0.01;
+        root.style.setProperty('--vh', vh + 'px');
+      }
+
+      window.addEventListener('load', () => { setVH(); resizeChrome(); });
+      window.addEventListener('resize', () => { setVH(); resizeChrome(); });
       const ro = new ResizeObserver(resizeChrome);
       if (toolbar) ro.observe(toolbar);
       if (thumbs) ro.observe(thumbs);
