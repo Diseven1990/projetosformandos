@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Slideshow — Plano de Comunicação (Bernardo Silva)</title>
+  <style>
+    :root { --bg:#0b0b0b; --fg:#f5f5f5; --accent:#ff2d55; }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial}
+    .toolbar{position:fixed;inset:0 0 auto 0;display:flex;gap:.5rem;align-items:center;padding:.75rem 1rem;background:linear-gradient(180deg,rgba(0,0,0,.75),rgba(0,0,0,.25),transparent);z-index:3}
+    .toolbar button,.toolbar .counter{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:var(--fg);padding:.5rem .75rem;border-radius:.75rem;backdrop-filter:blur(6px);font-weight:600;cursor:pointer}
+    .toolbar .counter{cursor:default}
+    .stage{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden}
+    .slide{max-width:96vw;max-height:90vh;border-radius:12px;box-shadow:0 10px 35px rgba(0,0,0,.55);user-select:none;-webkit-user-drag:none;transition:transform .25s ease}
+    .nav{position:fixed;inset:0;display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+    .nav button{pointer-events:auto;margin:0 .5rem;border:none;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.08);color:var(--fg);font-size:1.35rem;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+    .thumbs{position:fixed;inset:auto 0 0 0;display:flex;gap:.5rem;overflow-x:auto;padding:.5rem;background:linear-gradient(0deg,rgba(0,0,0,.8),rgba(0,0,0,.4),transparent)}
+    .thumbs img{height:64px;border-radius:8px;opacity:.7;cursor:pointer;transition:opacity .2s,transform .2s}
+    .thumbs img.active{outline:2px solid var(--accent);opacity:1;transform:translateY(-2px)}
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button id="btnPrev" title="Anterior">◀</button>
+    <button id="btnNext" title="Seguinte">▶</button>
+    <span class="counter" id="counter">1 / 10</span>
+    <button id="btnZoomIn" title="Zoom +">+</button>
+    <button id="btnZoomOut" title="Zoom -">−</button>
+    <button id="btnFit" title="Ajustar ao ecrã">Ajustar</button>
+    <button id="btnFullscreen" title="Ecrã inteiro">⛶</button>
+    <span style="margin-left:auto;opacity:.7">Arraste • ← →</span>
+  </div>
+  <div class="stage"><img id="slide" class="slide" src="images/slide-001.png" alt="Slide 1" /></div>
+  <div class="nav"><button id="prev">◀</button><button id="next">▶</button></div>
+  <div class="thumbs" id="thumbs"></div>
+
+  <script>
+    const slides = [
+      "images/slide-001.png",
+  "images/slide-002.png",
+  "images/slide-003.png",
+  "images/slide-004.png",
+  "images/slide-005.png",
+  "images/slide-006.png",
+  "images/slide-007.png",
+  "images/slide-008.png",
+  "images/slide-009.png",
+  "images/slide-010.png"
+    ];
+    let idx=0, scale=1;
+    const el={img:document.getElementById('slide'),counter:document.getElementById('counter'),
+      prev:document.getElementById('prev'),next:document.getElementById('next'),
+      btnPrev:document.getElementById('btnPrev'),btnNext:document.getElementById('btnNext'),
+      btnZoomIn:document.getElementById('btnZoomIn'),btnZoomOut:document.getElementById('btnZoomOut'),
+      btnFit:document.getElementById('btnFit'),btnFullscreen:document.getElementById('btnFullscreen'),
+      thumbs:document.getElementById('thumbs')};
+    function show(i){idx=(i+slides.length)%slides.length;el.img.src=slides[idx];el.img.alt='Slide '+(idx+1);
+      el.counter.textContent=(idx+1)+' / '+slides.length;scale=1;el.img.style.transform='scale(1)';
+      [...el.thumbs.children].forEach((t,j)=>t.classList.toggle('active',j===idx));}
+    function next(){show(idx+1)} function prev(){show(idx-1)}
+    el.prev.addEventListener('click',prev); el.next.addEventListener('click',next);
+    el.btnPrev.addEventListener('click',prev); el.btnNext.addEventListener('click',next);
+    document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')next(); if(e.key==='ArrowLeft')prev();
+      if(e.key==='+')zoom(1.1); if(e.key==='-')zoom(0.9); if(e.key==='f')fullscreen();});
+    function zoom(f){scale*=f; if(scale<0.5)scale=0.5;if(scale>3)scale=3; el.img.style.transform='scale('+scale+')';}
+    el.btnZoomIn.addEventListener('click',()=>zoom(1.15)); el.btnZoomOut.addEventListener('click',()=>zoom(0.85));
+    el.btnFit.addEventListener('click',()=>{scale=1;el.img.style.transform='scale(1)';});
+    function fullscreen(){const d=document.documentElement; if(!document.fullscreenElement)d.requestFullscreen?.(); else document.exitFullscreen?.();}
+    el.btnFullscreen.addEventListener('click',fullscreen);
+    let startX=null; el.img.addEventListener('pointerdown',e=>startX=e.clientX);
+    el.img.addEventListener('pointerup',e=>{if(startX===null)return; const dx=e.clientX-startX;
+      if(dx>50)prev(); if(dx<-50)next(); startX=null;});
+    slides.forEach((src,i)=>{const t=new Image(); t.src=src; t.alt='Miniatura '+(i+1);
+      t.addEventListener('click',()=>show(i)); el.thumbs.appendChild(t);});
+    show(0);
+  </script>
+</body>
+</html>
